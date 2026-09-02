@@ -55,11 +55,11 @@ done <<< "$preflight_output"
 
 if [ "${#warnings[@]}" -gt 0 ]; then
   echo "Warnings (non-blocking):"
-  for warning in "${warnings[@]}"; do echo "  - $warning"; done
+  for warning in ${warnings[@]+"${warnings[@]}"}; do echo "  - $warning"; done
 fi
 if [ "${#problems[@]}" -gt 0 ]; then
   echo "Preflight failed:" >&2
-  for problem in "${problems[@]}"; do echo "  - $problem" >&2; done
+  for problem in ${problems[@]+"${problems[@]}"}; do echo "  - $problem" >&2; done
   exit 1
 fi
 
