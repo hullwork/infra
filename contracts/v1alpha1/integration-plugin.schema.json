@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infra.convee.io/schemas/v1alpha1/integration-plugin.schema.json",
+  "title": "infra IntegrationPlugin",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {"const": "infra.convee.io/v1alpha1"},
+    "kind": {"const": "IntegrationPlugin"},
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {"name": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"}}
+    },
+    "spec": {
+      "type": "object",
+      "required": ["entrypoint", "actions"],
+      "additionalProperties": false,
+      "properties": {
+        "entrypoint": {"type": "string", "pattern": "^\\./[A-Za-z0-9._/-]+$"},
+        "sourceEnv": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+        "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["doctor", "up", "status", "verify"]}
+        },
+        "requires": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    }
+  }
+}

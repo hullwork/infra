@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infra.convee.io/schemas/v1alpha1/cluster-profile.schema.json",
+  "title": "infra ClusterProfile",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {"const": "infra.convee.io/v1alpha1"},
+    "kind": {"const": "ClusterProfile"},
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {"name": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"}}
+    },
+    "spec": {
+      "type": "object",
+      "required": ["clusters"],
+      "additionalProperties": false,
+      "properties": {
+        "project": {"type": "string", "default": "default"},
+        "clusters": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "server"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+              "server": {"type": "string", "minLength": 1},
+              "labels": {"type": "object", "additionalProperties": {"type": "string"}},
+              "capabilities": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "provides": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+                }
+              }
+            }
+          }
+        },
+        "syncPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "automated": {"type": "boolean", "default": true},
+            "prune": {"type": "boolean", "default": false},
+            "selfHeal": {"type": "boolean", "default": true}
+          }
+        }
+      }
+    }
+  }
+}

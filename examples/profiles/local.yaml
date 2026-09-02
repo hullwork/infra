@@ -1,0 +1,21 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: ClusterProfile
+metadata:
+  name: local
+spec:
+  project: default
+  clusters:
+    - name: in-cluster
+      server: https://kubernetes.default.svc
+      labels:
+        environment: local
+      capabilities:
+        provides: []
+  syncPolicy:
+    automated: true
+    # Opt-in only: with prune enabled Argo CD deletes every live object that
+    # leaves the stack, including stateful ones, and nothing in this repository
+    # restores them.  Leave it false until the destination cluster holds no data
+    # you cannot rebuild.
+    prune: false
+    selfHeal: true

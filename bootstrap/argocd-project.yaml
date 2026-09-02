@@ -1,0 +1,66 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+spec:
+  # This intentionally overwrites the fully permissive AppProject that Argo CD
+  # installs under the name `default`.  `ClusterProfile.spec.project` defaults to
+  # `default`, so a profile that omits the field must land in a *narrow* project,
+  # not a wildcard one.  A previous revision of this file re-stated Argo CD's own
+  # wildcards; that is not a guardrail, it is a file that looks like one.
+  #
+  # Every list below is enumerated on purpose.  Wildcards are not expanded: a
+  # `"*"` entry anywhere in this file disables the axis it appears on, and the
+  # regression test in tests/test_argocd_guardrails.py fails if one is added.
+  description: Fail-closed project for compiler-rendered applications
+  # Only the in-cluster Git daemon that scripts/bootstrap.sh installs is trusted
+  # by default.  A package whose source is an external Helm or OCI registry is
+  # rejected with "application repo ... is not permitted in project default"
+  # until its exact repoURL is added here -- one line per registry, never "*".
+  # See docs/CONFIGURATION.md for the widening procedure.
+  sourceRepos:
+    - git://git-server.gitops-system.svc.cluster.local/gitops.git
+  # The cluster axis is what bounds blast radius, so it is enumerated.  The
+  # namespace axis stays open because package namespaces are declared per
+  # catalog and are not knowable at bootstrap time; narrow it in a per-profile
+  # project when the catalog is fixed.
+  destinations:
+    # Management cluster: Argo CD runs here and examples/profiles/local.yaml
+    # targets it through this server URL.
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+    # Reference workload cluster registered by scripts/bootstrap-workload.sh.
+    # Name-based so spoke API server addresses stay out of Git.
+    - name: workload
+      namespace: "*"
+  # Cluster-scoped kinds are the ones a mistaken sync cannot undo, so they are
+  # listed individually.  Adding a cluster-scoped kind is a reviewed change.
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: ""
+      kind: PersistentVolume
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+    - group: apiregistration.k8s.io
+      kind: APIService
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+    - group: node.k8s.io
+      kind: RuntimeClass
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: storage.k8s.io
+      kind: StorageClass
+  # Namespaced kinds stay open: the destination list already decides which
+  # cluster and the compiler already decides which namespace, and enumerating
+  # every Helm chart's namespaced kinds would be a permanent maintenance debt
+  # with no additional containment.
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

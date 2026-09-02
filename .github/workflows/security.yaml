@@ -1,0 +1,108 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    name: CodeQL
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
+        with:
+          languages: python
+          build-mode: none
+      - id: analyze
+        uses: github/codeql-action/analyze@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
+        with:
+          upload: never
+          upload-database: false
+      - name: Gate on high-severity findings
+        env:
+          SARIF_DIR: ${{ steps.analyze.outputs.sarif-output }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -s -r '
+            [ .[]
+              | .runs[]
+              | . as $run
+              | ( [ $run.tool.driver.rules[]? ]
+                  + [ $run.tool.extensions[]?.rules[]? ] ) as $rules
+              | $run.results[]?
+              | . as $result
+              | ( [ $rules[]
+                    | select(.id == $result.ruleId)
+                    | (.properties["security-severity"] // "0") | tonumber ]
+                  | max // 0 ) as $severity
+              | select($severity >= 7)
+              | "\($result.ruleId) (security-severity \($severity)): "
+                + "\($result.locations[0].physicalLocation.artifactLocation.uri // "unknown")"
+            ]
+            | .[]
+          ' "$SARIF_DIR"/*.sarif | tee /tmp/codeql-high.txt
+          if [ -s /tmp/codeql-high.txt ]; then
+            echo "CodeQL reported findings at security-severity 7.0 or above" >&2
+            exit 1
+          fi
+          echo "CodeQL: no findings at security-severity 7.0 or above"
+
+  secrets:
+    name: Secret history scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Gitleaks CLI
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --fail --location --retry 3 \
+            --output "/tmp/${archive}" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  /tmp/${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "/tmp/${archive}" --directory /tmp gitleaks
+          /tmp/gitleaks version
+      - name: Scan complete Git history
+        run: /tmp/gitleaks git --redact --verbose --no-banner .
+
+  python-dependencies:
+    name: Python dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Audit Python dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check pip-audit==2.9.0
+          python -m pip_audit --requirement requirements-dev.txt --strict

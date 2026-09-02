@@ -1,0 +1,6 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: VersionLock
+spec:
+  packages:
+    cert-manager:
+      version: v1.21.1

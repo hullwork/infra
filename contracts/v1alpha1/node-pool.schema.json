@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infra.convee.io/schemas/v1alpha1/node-pool.schema.json",
+  "title": "infra NodePool",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {"const": "infra.convee.io/v1alpha1"},
+    "kind": {"const": "NodePool"},
+    "metadata": {"$ref": "#/$defs/metadata"},
+    "spec": {
+      "type": "object",
+      "required": ["cluster", "provider", "capacity", "scaleDown", "observability"],
+      "additionalProperties": false,
+      "properties": {
+        "cluster": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "provider": {
+          "type": "object",
+          "required": ["type", "ref"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {"enum": ["local-lima-kubeadm", "cluster-autoscaler", "karpenter", "external"]},
+            "ref": {"type": "string", "minLength": 1},
+            "parameters": {"type": "object"}
+          }
+        },
+        "capacity": {
+          "type": "object",
+          "required": ["min", "max", "desired"],
+          "additionalProperties": false,
+          "properties": {
+            "min": {"type": "integer", "minimum": 0},
+            "max": {"type": "integer", "minimum": 0},
+            "desired": {"type": "integer", "minimum": 0}
+          }
+        },
+        "scaleDown": {
+          "type": "object",
+          "required": ["drainTimeoutSeconds", "allowLocalPersistentVolumes", "allowEmptyDirDataLoss", "retainProviderDisks"],
+          "additionalProperties": false,
+          "properties": {
+            "drainTimeoutSeconds": {"type": "integer", "minimum": 30, "maximum": 3600},
+            "allowLocalPersistentVolumes": {"type": "boolean", "const": false},
+            "allowEmptyDirDataLoss": {"type": "boolean", "const": false},
+            "retainProviderDisks": {"type": "boolean", "const": true}
+          }
+        },
+        "observability": {
+          "type": "object",
+          "required": ["eventLog", "phaseTimeoutSeconds"],
+          "additionalProperties": false,
+          "properties": {
+            "eventLog": {"type": "string", "minLength": 1},
+            "phaseTimeoutSeconds": {"type": "integer", "minimum": 30, "maximum": 7200},
+            "metricsPrefix": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"}
+      }
+    }
+  }
+}

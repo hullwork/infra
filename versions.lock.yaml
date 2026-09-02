@@ -1,0 +1,7 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: VersionLock
+spec:
+  packages:
+    demo-web:
+      version: 1.0.0
+      digest: sha256:1111111111111111111111111111111111111111111111111111111111111111

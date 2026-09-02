@@ -1,0 +1,21 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: Package
+metadata:
+  name: cert-manager
+  annotations:
+    infra.convee.io/upstream: https://cert-manager.io/docs/installation/helm/
+spec:
+  category: PlatformAddon
+  namespace: cert-manager
+  source:
+    type: helm
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+  capabilities:
+    requires:
+      - kubernetes.api
+    provides:
+      - certificates.x509
+  values:
+    crds:
+      enabled: true

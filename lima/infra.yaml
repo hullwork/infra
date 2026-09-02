@@ -1,0 +1,51 @@
+images:
+- location: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+  arch: "x86_64"
+- location: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-arm64.img"
+  arch: "aarch64"
+cpus: 6
+memory: "6GiB"
+disk: "30GiB"
+#SPIKE-VERIFIED (lima 2.2.0): Named user-v2 network `kube`. The host has no 192.168.6.x direct route,
+#Host access is always through portForwards. The network is pre-built by the bootstrap library (non-idempotent, check if it exists first):
+#   limactl network create kube --gateway 192.168.6.1/24
+#(DHCP reserved segments are seeded by the kb_ensure_network write leases.json, see DHCP_RESERVED_RANGES.)
+networks:
+  - lima: kube
+portForwards:
+  - guestPort: 6443
+    hostPort: 18445
+    static: true
+  - guestPort: 5000
+    hostPort: 15101
+    static: true
+  - guestPort: 30418
+    hostPort: 19418
+    static: true
+provision:
+- mode: system
+  script: |
+    #!/bin/sh
+    set -eux
+    apt-get update -qq
+    apt-get install -y -qq containerd apt-transport-https ca-certificates curl gpg
+    mkdir -p /etc/apt/keyrings /etc/containerd
+    containerd config default | tee /etc/containerd/config.toml >/dev/null
+    sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+    systemctl restart containerd
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key \
+      | gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /' \
+      > /etc/apt/sources.list.d/kubernetes.list
+    apt-get update -qq
+    apt-get install -y -qq kubelet=1.36.* kubeadm=1.36.* kubectl=1.36.*
+    apt-mark hold kubelet kubeadm kubectl
+    cat > /etc/netplan/60-static.yaml <<'NETPLAN'
+    network:
+      version: 2
+      ethernets:
+        eth0:
+          dhcp4: true
+          addresses: [192.168.6.22/24]
+    NETPLAN
+    netplan apply

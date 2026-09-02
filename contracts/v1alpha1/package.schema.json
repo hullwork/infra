@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infra.convee.io/schemas/v1alpha1/package.schema.json",
+  "title": "infra Package",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "infra.convee.io/v1alpha1"},
+    "kind": {"const": "Package"},
+    "metadata": {"$ref": "#/$defs/metadata"},
+    "spec": {
+      "type": "object",
+      "required": ["category", "source", "namespace"],
+      "additionalProperties": false,
+      "properties": {
+        "category": {"enum": ["ClusterProvider", "PlatformAddon", "WorkloadPackage"]},
+        "namespace": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "namespaceMode": {"enum": ["destination", "values"], "default": "destination"},
+        "source": {
+          "oneOf": [
+            {"$ref": "#/$defs/ociSource"},
+            {"$ref": "#/$defs/helmSource"},
+            {"$ref": "#/$defs/gitSource"}
+          ]
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "provides": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "requires": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+          }
+        },
+        "values": {"type": "object"}
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "annotations": {"type": "object", "additionalProperties": {"type": "string"}}
+      }
+    },
+    "ociSource": {
+      "type": "object",
+      "required": ["type", "repoURL"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "oci"},
+        "repoURL": {"type": "string", "pattern": "^oci://"},
+        "path": {"type": "string", "default": "."},
+        "renderer": {"enum": ["directory", "helm"], "default": "directory"}
+      }
+    },
+    "helmSource": {
+      "type": "object",
+      "required": ["type", "repoURL", "chart"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "helm"},
+        "repoURL": {"type": "string", "minLength": 1},
+        "chart": {"type": "string", "minLength": 1}
+      }
+    },
+    "gitSource": {
+      "type": "object",
+      "required": ["type", "repoURL", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "git"},
+        "repoURL": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "renderer": {"enum": ["directory", "helm"], "default": "directory"}
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: Stack
+metadata:
+  name: demo
+spec:
+  packages:
+    - name: demo-web
+      values:
+        replicaCount: 2

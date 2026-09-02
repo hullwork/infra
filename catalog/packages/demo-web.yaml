@@ -1,0 +1,18 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: Package
+metadata:
+  name: demo-web
+spec:
+  category: WorkloadPackage
+  namespace: demo-web
+  source:
+    type: oci
+    repoURL: oci://ghcr.io/example/infra-packages/demo-web
+    path: .
+    renderer: helm
+  capabilities:
+    requires: []
+    provides:
+      - http.service
+  values:
+    replicaCount: 1

@@ -1,0 +1,7 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: Stack
+metadata:
+  name: third-party-security
+spec:
+  packages:
+    - name: cert-manager

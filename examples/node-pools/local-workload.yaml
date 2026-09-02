@@ -1,0 +1,32 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: NodePool
+metadata:
+  name: workload-workers
+spec:
+  cluster: workload
+  provider:
+    type: local-lima-kubeadm
+    ref: builtin/lima-kubeadm
+    parameters:
+      kubeconfig: .state/kubeconfig-workload
+      labels:
+        infra.convee.io/node-pool: workload-runtime
+        workload.convee.io/node-role: runtime
+      taints:
+        - workload.convee.io/node-role=runtime:NoSchedule
+      workers:
+        - vm: workload-w1
+          node: lima-workload-w1
+  capacity:
+    min: 0
+    max: 1
+    desired: 1
+  scaleDown:
+    drainTimeoutSeconds: 300
+    allowLocalPersistentVolumes: false
+    allowEmptyDirDataLoss: false
+    retainProviderDisks: true
+  observability:
+    eventLog: .state/nodepool-events.jsonl
+    phaseTimeoutSeconds: 900
+    metricsPrefix: infra_nodepool

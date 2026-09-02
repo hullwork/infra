@@ -1,0 +1,17 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: ClusterProfile
+metadata:
+  name: third-party-example
+spec:
+  clusters:
+    - name: example
+      server: https://kubernetes.example.invalid
+      labels:
+        environment: example
+      capabilities:
+        provides:
+          - kubernetes.api
+  syncPolicy:
+    automated: false
+    prune: false
+    selfHeal: false
