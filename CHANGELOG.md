@@ -75,5 +75,5 @@ All notable changes to Infra are documented in this file. Releases follow
 - Immutable OCI package and runtime-image release imports.
 - Standalone validation, rendering, and fresh-clone verification.
 
-[Unreleased]: https://github.com/convee/infra/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/convee/infra/releases/tag/v0.1.0
+[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/hullwork/infra/releases/tag/v0.1.0

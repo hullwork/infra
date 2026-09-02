@@ -34,7 +34,7 @@ product-specific shell branch. Applications publish immutable OCI, Helm, or Git
 artifacts and enter through external catalog data.
 
 > **Where this fits.** infra is one of several independently released repositories in this
-> platform. [`convee/platform-composition`](https://github.com/convee/platform-composition)
+> platform. [`hullwork/platform-composition`](https://github.com/hullwork/platform-composition)
 > is the only place that describes all of them together: what each one is, where the
 > boundaries between them are, and how to install the set on an enterprise cluster. This
 > README does not repeat any of that - it is about infra alone. (Naming the other

@@ -14,7 +14,7 @@ permissions: {}
 jobs:
   release:
     name: Verify, attest, and release
-    if: github.repository == 'convee/infra'
+    if: github.repository == 'hullwork/infra'
     runs-on: ubuntu-latest
     permissions:
       contents: write

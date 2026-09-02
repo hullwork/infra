@@ -78,11 +78,11 @@ class DocumentationContractTests(unittest.TestCase):
         # A rename changes the slug; a reader clicks the URL. Each is asserted
         # with its own terminator - backticks, and the closing parenthesis of
         # the Markdown link - because a bare substring stays green through the
-        # rename that matters most: "convee/platform-composition-v2" contains
-        # "convee/platform-composition". Same shape as an unanchored pattern
+        # rename that matters most: "hullwork/platform-composition-v2" contains
+        # "hullwork/platform-composition". Same shape as an unanchored pattern
         # matching inside a longer word.
-        self.assertIn("`convee/platform-composition`", readme)
-        self.assertIn("](https://github.com/convee/platform-composition)", readme)
+        self.assertIn("`hullwork/platform-composition`", readme)
+        self.assertIn("](https://github.com/hullwork/platform-composition)", readme)
 
     def test_new_application_uses_declarative_package_contract(self) -> None:
         texts = [
