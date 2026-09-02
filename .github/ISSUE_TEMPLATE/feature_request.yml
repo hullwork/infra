@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a change to the compiler core or its contracts.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        infra is deliberately application-neutral: it knows about Packages, Stacks,
+        ClusterProfiles and locks, not about what any particular workload does. A
+        proposal that requires infra to know something specific to one application
+        usually belongs in that application's Package instead. See
+        docs/OPEN_SOURCE_SCOPE.md for where that line is drawn.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What cannot be expressed or done today. Describe the situation, not the fix.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you want instead, and what the inputs and generated output would look like.
+    validations:
+      required: true
+  - type: dropdown
+    id: contract
+    attributes:
+      label: Does this change a contract?
+      description: >
+        Anything under contracts/ is a versioned API. Changing it affects every
+        existing Package.
+      options:
+        - "No: only behavior inside the compiler"
+        - "Yes: adds an optional field"
+        - "Yes: changes or removes an existing field (breaking)"
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: >
+        Including doing this in a Package rather than in infra, and why that is not
+        enough.

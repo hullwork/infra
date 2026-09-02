@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a reproducible defect without including secrets or cluster credentials.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include kubeconfigs, access tokens, registry credentials, or production
+        data. Security vulnerabilities must follow SECURITY.md, not this form.
+
+        infra is a compiler: the same inputs must always produce the same output. A
+        report is only actionable if someone else can run it and get your result, so
+        the inputs below are required.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Contract validation (contracts/)
+        - Package authoring and catalog (catalog/)
+        - Rendering and generated output
+        - Version locks and release metadata
+        - NodePool planning
+        - Argo CD desired state and bootstrap (bootstrap/)
+        - Local reference environment (lima/, kubeadm)
+        - CLI and scripts (scripts/)
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: inputs
+    attributes:
+      label: Inputs
+      description: >
+        The minimal redacted Package, Stack, ClusterProfile and VersionLock that
+        reproduce this. Redact hostnames and credentials; keep the structure.
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Command and output
+      description: The exact command you ran and its complete non-sensitive output.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected versus actual
+      description: >
+        What the generated output should have contained and what it contained
+        instead. If the difference is in rendered manifests, a diff is ideal.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Already checked
+      options:
+        - label: I confirmed no existing issue covers this.
+        - label: I read SUPPORT.md and this is inside the supported scope.
+        - label: The inputs above contain no credentials.
+          required: true
