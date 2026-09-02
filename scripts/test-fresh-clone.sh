@@ -40,7 +40,7 @@ PY
 )
 
 test -s "$temporary_root/rendered.yaml"
-if grep -En '/Users/|\.\./|github\.com/convee/' "$temporary_root/rendered.yaml"; then
+if grep -En '/Users/|\.\./|github\.com/(convee|hullwork)/' "$temporary_root/rendered.yaml"; then
   printf '%s\n' 'fresh-clone render contains a source-workspace or product-specific dependency' >&2
   exit 1
 fi
