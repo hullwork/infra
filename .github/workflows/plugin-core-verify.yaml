@@ -25,5 +25,12 @@ jobs:
       - run: python -m pip install -r requirements-dev.txt
       - run: make test
       - run: make validate
+      - name: Validate and render the first-deployment example
+        run: |
+          make validate CATALOG=examples/hello/catalog STACK=examples/hello/stack.yaml \
+            PROFILE=examples/hello/profile.yaml LOCK=examples/hello/versions.lock.yaml
+          make render CATALOG=examples/hello/catalog STACK=examples/hello/stack.yaml \
+            PROFILE=examples/hello/profile.yaml LOCK=examples/hello/versions.lock.yaml \
+            > /tmp/hello-applicationset.yaml
       - run: make render > /tmp/applicationsets.yaml
       - run: make fresh-clone-test
