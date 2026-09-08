@@ -5,7 +5,14 @@ All notable changes to Infra are documented in this file. Releases follow
 
 ## [Unreleased]
 
-## [0.1.0-alpha.1] - 2026-09-08
+## [0.1.0-alpha.2] - 2026-09-08
+
+- Restore the remote annotated tag object after Actions checkout before release
+  verification. The `alpha.1` tag is retained, but its workflow stopped before
+  building or publishing any release assets.
+- Include the independently tested compiler and onboarding changes below.
+
+## [0.1.0-alpha.1] - 2026-09-08 (tag only; release failed)
 
 - Prepare the first public Alpha candidate; the previously listed 0.1.0 was an
   internal source milestone and was never published as a tag or GitHub Release.
@@ -91,5 +98,7 @@ All notable changes to Infra are documented in this file. Releases follow
 - Immutable OCI package and runtime-image release imports.
 - Standalone validation, rendering, and fresh-clone verification.
 
-[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0-alpha.1...HEAD
+[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0-alpha.2...HEAD
 [0.1.0-alpha.1]: https://github.com/hullwork/infra/releases/tag/v0.1.0-alpha.1
+
+[0.1.0-alpha.2]: https://github.com/hullwork/infra/releases/tag/v0.1.0-alpha.2

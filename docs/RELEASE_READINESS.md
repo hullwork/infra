@@ -1,7 +1,7 @@
 # Alpha release readiness
 
 This document records release evidence, not a production certification. The
-candidate is `0.1.0-alpha.1`. Only results actually executed are marked passed.
+candidate is `0.1.0-alpha.2`. Only results actually executed are marked passed.
 
 | Gate | Status | Evidence / limit |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ candidate is `0.1.0-alpha.1`. Only results actually executed are marked passed.
 | Independent Argo CD deployment | Passed | Argo CD 3.5.2 in dedicated namespaces on Docker Desktop Kubernetes 1.32.2, arm64; podinfo Git Helm example reached Synced/Healthy |
 | Git update / revert / deletion retention | Passed | HTTP content changed and reverted; deleting the ApplicationSet garbage-collected its child Application while retaining the Deployment, Service and HTTP response |
 | Browser acceptance | Passed | Chrome showed `Hello again`, PING incremented, and a reload after revert/retirement showed `Hello from Infra` with version 6.15.0 |
-| Release archive and anonymous download | Pending | No release is published yet |
+| Release archive and anonymous download | Pending | The `alpha.1` workflow stopped at tag verification before creating assets; `alpha.2` restores the remote tag object after checkout and adds a regression check |
 | Public source and private vulnerability reporting | Passed | Repository visibility is public; anonymous clone returned `8c8c88d`; GitHub private vulnerability reporting is enabled |
 
 The first example's upstream Git commit was fetched and Helm-rendered separately:

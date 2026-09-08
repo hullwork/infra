@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import re
 import subprocess
 import tarfile
@@ -88,6 +89,53 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertNotIn(".state", self.text)
         self.assertNotIn("kubeconfig", self.text)
         self.assertNotIn("tar --exclude", self.text)
+
+    def test_remote_tag_is_restored_and_lightweight_tags_are_rejected(self) -> None:
+        steps = self.workflow["jobs"]["release"]["steps"]
+        guard = next(s["run"] for s in steps if s.get("id") == "release")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            remote = root / "remote"
+            checkout = root / "checkout"
+            remote.mkdir()
+
+            def git(cwd, *args):
+                return subprocess.check_output(
+                    ["git", *args], cwd=cwd, stderr=subprocess.PIPE, text=True
+                ).strip()
+
+            git(remote, "init", "-b", "main")
+            git(remote, "config", "user.name", "Release Test")
+            git(remote, "config", "user.email", "release@example.invalid")
+            (remote / "VERSION").write_text("9.0.0-alpha.1\n")
+            (remote / "CHANGELOG.md").write_text("## [9.0.0-alpha.1]\n")
+            git(remote, "add", "VERSION", "CHANGELOG.md")
+            git(remote, "commit", "-m", "release fixture")
+            tag = "v9.0.0-alpha.1"
+            git(remote, "tag", "-a", tag, "-m", "annotated release")
+            git(root, "clone", str(remote), str(checkout))
+            # Reproduce checkout's fallback fetch that peels the tag locally.
+            git(checkout, "update-ref", f"refs/tags/{tag}", "HEAD")
+            self.assertEqual("commit", git(checkout, "cat-file", "-t", tag))
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            (bin_dir / "gh").write_text("#!/bin/sh\nprintf 'identical\\n'\n")
+            (bin_dir / "gh").chmod(0o755)
+            env = dict(os.environ, GITHUB_REF_NAME=tag,
+                       GITHUB_REPOSITORY="example/infra",
+                       GITHUB_OUTPUT=str(root / "output"),
+                       PATH=str(bin_dir) + os.pathsep + os.environ["PATH"])
+            result = subprocess.run(["bash", "-c", guard], cwd=checkout,
+                                    env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual("tag", git(checkout, "cat-file", "-t", tag))
+
+            # A truly lightweight remote tag must still fail closed.
+            git(remote, "tag", "-f", tag, "HEAD")
+            result = subprocess.run(["bash", "-c", guard], cwd=checkout,
+                                    env=env, capture_output=True, text=True)
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("must be an annotated tag", result.stderr)
 
     def test_core_paths_entries_all_exist(self) -> None:
         core_paths = shell_array(self.text, "core_paths")

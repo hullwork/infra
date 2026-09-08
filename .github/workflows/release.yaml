@@ -40,6 +40,9 @@ jobs:
             echo "release tag must be semantic version vMAJOR.MINOR.PATCH[-PRERELEASE]" >&2
             exit 1
           fi
+          # checkout can replace an annotated local tag with the event's commit.
+          # Restore the remote tag object before checking its type and target.
+          git fetch --force --no-tags origin "refs/tags/${tag}:refs/tags/${tag}"
           if [[ "$(git cat-file -t "refs/tags/${tag}")" != "tag" ]]; then
             echo "release tag ${tag} must be an annotated tag" >&2
             exit 1
