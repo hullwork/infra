@@ -5,18 +5,18 @@ candidate is `0.1.0-alpha.1`. Only results actually executed are marked passed.
 
 | Gate | Status | Evidence / limit |
 | --- | --- | --- |
-| Unit tests and fresh-clone install | Passed | macOS: 114 tests and clean-clone install/validate/render at `ec29c8e`; later workflow changes passed their focused checks |
+| Unit tests and fresh-clone install | Passed | 114 tests plus clean-clone install/validate/render passed in all four GitHub OS/Python jobs at `8c8c88d` |
 | Python 3.10 / 3.12 | Passed | CPython 3.10.16 and 3.12.9, 114 tests each |
 | Linux source verification | Passed | Alpine 3.20 / Python 3.12.13: 114 tests and hello validation, with Bash, Git and Make installed; this does not replace the GitHub Ubuntu runner |
 | Full remote Git history secret scan | Passed | Gitleaks 8.30.1, all refs: 21 reachable commits (14 non-merge commits scanned), no findings; candidate changes separately scanned on 2026-09-08 |
 | Public-facing metadata | Passed | Reviewed 48 historical Actions runs, downloaded all 43 runs with steps, scanned 5.39 MB of logs and issue/PR text; no secret findings; no uploaded Actions artifacts existed |
 | Python dependency audit | Passed | Audited all seven exact resolved compiler dependencies in both Python 3.10 and 3.12 environments with pip-audit; no known vulnerabilities reported |
-| GitHub Actions | Blocked | Account billing/spending restriction prevented jobs from starting; no test steps executed at `ec29c8e`; see [core run](https://github.com/hullwork/infra/actions/runs/34243168377) and [security run](https://github.com/hullwork/infra/actions/runs/34243168268) |
+| GitHub Actions | Passed | At `8c8c88d`, public-repository reruns completed all steps: [core matrix](https://github.com/hullwork/infra/actions/runs/34247056183/attempts/2) and [CodeQL, dependency audit, history scan](https://github.com/hullwork/infra/actions/runs/34247056152/attempts/2). Earlier private-repository billing failures are superseded by these executed results |
 | Independent Argo CD deployment | Passed | Argo CD 3.5.2 in dedicated namespaces on Docker Desktop Kubernetes 1.32.2, arm64; podinfo Git Helm example reached Synced/Healthy |
 | Git update / revert / deletion retention | Passed | HTTP content changed and reverted; deleting the ApplicationSet garbage-collected its child Application while retaining the Deployment, Service and HTTP response |
 | Browser acceptance | Passed | Chrome showed `Hello again`, PING incremented, and a reload after revert/retirement showed `Hello from Infra` with version 6.15.0 |
 | Release archive and anonymous download | Pending | No release is published yet |
-| Private vulnerability reporting | Pending | Enable and verify when the repository is public |
+| Public source and private vulnerability reporting | Passed | Repository visibility is public; anonymous clone returned `8c8c88d`; GitHub private vulnerability reporting is enabled |
 
 The first example's upstream Git commit was fetched and Helm-rendered separately:
 it contains a namespaced Deployment and Service plus three Helm test Pods that
