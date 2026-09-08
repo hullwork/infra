@@ -59,6 +59,8 @@ it delegates rendering of package contents and continuous deployment to Argo CD.
 ## Quick start
 
 ```bash
+git clone https://github.com/hullwork/infra.git
+cd infra
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 
@@ -69,6 +71,11 @@ make render-applications  # plain Application stream, easier to review
 make test                 # the unit suite
 make fresh-clone-test     # clone, install, validate and render in a clean tree
 ```
+
+Release archive users can run the same install, validate and render commands
+after unpacking `infra-core-*.tar.gz`. Skip the clone commands in that case.
+`make test` and `make fresh-clone-test` are contributor checks that require a Git
+checkout, including `.github/`; they are not archive-consumer commands.
 
 Every target runs through `scripts/infra-python.sh`, which prefers
 `.venv/bin/python`, falls back to `uv run`, and finally to `python3`. Once the
