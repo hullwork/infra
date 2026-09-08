@@ -5,6 +5,14 @@ All notable changes to Infra are documented in this file. Releases follow
 
 ## [Unreleased]
 
+- Make the Argo CD control namespace configurable through ClusterProfile.
+- Separate Application pruning, ApplicationSet child deletion and resource retention;
+  default to retaining workloads. Existing finalizers need migration review.
+- Publish local rendered state through a Git-watching parent Application.
+- Fix Bash 3.2 lock cleanup after errors and stabilize provider timeout coverage.
+- Require an explicit Lima inventory for local mutations; retain the fixed topology
+  as an experimental reference. Add an independent existing-Argo-CD walkthrough.
+
 ### Changed (breaking)
 
 - `ClusterProfile.spec.syncPolicy.prune` now defaults to `false` instead of

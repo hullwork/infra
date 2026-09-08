@@ -7,6 +7,7 @@ infra_root="$(cd "$script_dir/../.." && pwd)"
 export KB_INFRA_ROOT="${KB_INFRA_ROOT:-$infra_root}"
 # shellcheck source=../lib/kubeadm-bootstrap.sh
 source "$infra_root/scripts/lib/kubeadm-bootstrap.sh"
+kb_require_lima_home
 
 action="${1:-}"
 shift || true

@@ -4,6 +4,10 @@ metadata:
   name: local
 spec:
   project: default
+  argocdNamespace: argocd
+  applicationSetPolicy:
+    applicationsSync: create-update
+    preserveResourcesOnDeletion: true
   clusters:
     - name: in-cluster
       server: https://kubernetes.default.svc
@@ -13,9 +17,6 @@ spec:
         provides: []
   syncPolicy:
     automated: true
-    # Opt-in only: with prune enabled Argo CD deletes every live object that
-    # leaves the stack, including stateful ones, and nothing in this repository
-    # restores them.  Leave it false until the destination cluster holds no data
-    # you cannot rebuild.
+    # Resource pruning within an Application is a separate opt-in.
     prune: false
     selfHeal: true

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import yaml
@@ -198,8 +199,24 @@ class NodePoolTests(unittest.TestCase):
             )
             provider.chmod(0o755)
             started = time.monotonic()
-            with self.assertRaisesRegex(NODEPOOL.NodePoolError, "phaseTimeoutSeconds"):
-                NODEPOOL.reconcile(root / "pool.yaml", pool, 1, provider)
+            # The timeout assertion starts once the fixture has actually
+            # spawned its child. Process launch can take >1s on a busy host;
+            # timing that race did not test descendant cleanup at all.
+            real_popen = subprocess.Popen
+
+            def start_fixture(*args, **kwargs):
+                process = real_popen(*args, **kwargs)
+                deadline = time.monotonic() + 10
+                while not child_pid_file.exists() or not child_pid_file.read_text().strip():
+                    if process.poll() is not None or time.monotonic() >= deadline:
+                        NODEPOOL._end_process_group(process)
+                        raise AssertionError("provider fixture did not start its child")
+                    time.sleep(0.01)
+                return process
+
+            with mock.patch.object(NODEPOOL.subprocess, "Popen", side_effect=start_fixture):
+                with self.assertRaisesRegex(NODEPOOL.NodePoolError, "phaseTimeoutSeconds"):
+                    NODEPOOL.reconcile(root / "pool.yaml", pool, 1, provider)
             elapsed = time.monotonic() - started
             child_pid = int(child_pid_file.read_text().strip())
             events = [
@@ -319,18 +336,12 @@ class NodePoolTests(unittest.TestCase):
         self.assertIn("operator.tolerations[2].key=node.kubernetes.io/unreachable", installer)
 
     def test_local_bootstrap_scripts_parse(self) -> None:
-        scripts = [
-            ROOT / "scripts" / name
-            for name in (
-                "bootstrap.sh",
-                "bootstrap-workload.sh",
-                "common.sh",
-                "destroy.sh",
-                "preflight.sh",
-                "publish-rendered.sh",
-            )
-        ]
-        subprocess.run(["bash", "-n", *map(str, scripts)], check=True)
+        scripts = sorted((ROOT / "scripts").rglob("*.sh"))
+        self.assertTrue(scripts)
+        # bash -n file1 file2 treats file2 as an argument, not another script.
+        for script in scripts:
+            with self.subTest(script=script.name):
+                subprocess.run(["bash", "-n", str(script)], check=True)
 
     def test_local_profile_is_generic_management_and_workload(self) -> None:
         profile = ROOT / "scripts" / "lib" / "kubeadm_profile.py"

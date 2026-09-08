@@ -20,6 +20,15 @@
       "additionalProperties": false,
       "properties": {
         "project": {"type": "string", "default": "default"},
+        "argocdNamespace": {"type": "string", "default": "argocd", "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "applicationSetPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "applicationsSync": {"type": "string", "enum": ["create-only", "create-update", "create-delete", "sync"], "default": "create-update"},
+            "preserveResourcesOnDeletion": {"type": "boolean", "default": true}
+          }
+        },
         "clusters": {
           "type": "array",
           "minItems": 1,

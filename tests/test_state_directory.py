@@ -118,5 +118,33 @@ class StateDirectoryTests(unittest.TestCase):
         self.assertEqual([], offenders)
 
 
+
+class LimaInventoryBoundaryTests(unittest.TestCase):
+    def test_mutations_refuse_implicit_global_inventory(self):
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as temporary:
+            marker = Path(temporary) / "called"
+            for function in ("kb_vm_up", "kb_vm_down", "kb_vm_delete", "kb_ensure_network", "kb_ensure_cluster"):
+                env = os.environ.copy()
+                env.pop("LIMA_HOME", None)
+                script = (
+                    f'source "{ROOT}/scripts/lib/kubeadm-bootstrap.sh"; '
+                    f'limactl() {{ touch "{marker}"; }}; {function} infra'
+                )
+                result = subprocess.run(["bash", "-c", script], env=env, text=True, capture_output=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("explicit absolute LIMA_HOME", result.stderr)
+                self.assertFalse(marker.exists())
+
+    def test_explicit_inventory_is_not_rewritten(self):
+        result = subprocess.run([
+            "bash", "-c",
+            f'source "{ROOT}/scripts/lib/kubeadm-bootstrap.sh"; '
+            'LIMA_HOME=/tmp/selected-inventory; kb_require_lima_home; '
+            "sh -c 'printf %s \"$LIMA_HOME\"'",
+        ], text=True, capture_output=True, check=True)
+        self.assertEqual("/tmp/selected-inventory", result.stdout)
+
 if __name__ == "__main__":
     unittest.main()

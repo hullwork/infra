@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,7 +18,7 @@ ENTRYPOINTS = sorted(ROOT.glob("scripts/bootstrap*.sh"))
 
 def bash(script: str, **environment: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["bash", "-c", script],
+        ["/bin/bash" if sys.platform == "darwin" else "bash", "-c", script],
         cwd=ROOT,
         text=True,
         capture_output=True,
@@ -82,6 +83,16 @@ class HostWorkloadLockTests(unittest.TestCase):
             self.assertNotEqual(0, result.returncode)
             self.assertIn("host disk headroom too low", result.stderr)
             self.assertIn("heavy host operation blocked", result.stderr)
+            self.assertFalse(Path(temporary, "lock").exists())
+
+    def test_failed_command_releases_lock_under_nounset(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            result = bash(
+                f'set -eu; source "{GUARD}"; infra_with_host_workload_lock probe false',
+                INFRA_HOST_WORKLOAD_LOCK_DIR=f"{temporary}/lock",
+                INFRA_ALLOW_HOST_PRESSURE="1",
+            )
+            self.assertEqual(1, result.returncode, result.stderr)
             self.assertFalse(Path(temporary, "lock").exists())
 
     def test_the_bypass_is_explicit_and_announces_itself(self) -> None:

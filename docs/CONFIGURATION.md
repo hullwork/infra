@@ -18,27 +18,43 @@ state or store secret values.
 
 ## Deletion policy and the Argo CD project
 
-Two settings decide whether a reconciliation can destroy data. Both are
-fail-closed by default and both are widened in a reviewed Git change.
-
-| Setting | Default | Effect when widened |
-| --- | --- | --- |
-| `ClusterProfile.spec.syncPolicy.prune` | `false` | Argo CD deletes every live object that has left the stack |
-| `bootstrap/argocd-project.yaml` `sourceRepos` | in-cluster Git daemon only | the listed repository may be reconciled into the cluster |
-
-`prune` is off because deletion is the one reconciliation outcome no rollback
-undoes: a removed `StatefulSet` takes its `PersistentVolumeClaim` with it. The
-`ServerSideApply=true` sync option that every rendered application carries makes
-this sharper, not softer -- under server-side apply the fields Argo CD does not
-own are excluded from the diff, so drift stops being reported while pruning
-would keep deleting. Turn `prune` on per profile, once the destination cluster
-holds nothing you cannot rebuild:
+The compiler separates the control namespace and three deletion decisions:
 
 ```yaml
 spec:
+  argocdNamespace: argocd  # use the namespace of your Argo CD installation
   syncPolicy:
-    prune: true
+    automated: true
+    prune: false
+    selfHeal: true
+  applicationSetPolicy:
+    applicationsSync: create-update
+    preserveResourcesOnDeletion: true
 ```
+
+- `prune` governs removal of workload resources during Application sync.
+- `applicationsSync` governs creation/update/deletion of generated Applications.
+  Argo CD's controller policy takes precedence unless per-set overrides are
+  enabled (`applicationsetcontroller.enable.policy.override: "true"` in
+  `argocd-cmd-params-cm`, followed by a controller restart). Have your operator
+  configure this; local bootstrap does so automatically.
+- `preserveResourcesOnDeletion` prevents the controller from adding a workload
+  deletion finalizer to new Applications. It does not prevent the ApplicationSet
+  itself from being deleted, and is independent of `prune`.
+
+For existing Applications, inspect `metadata.finalizers` before migration: a
+previously installed deletion finalizer can still remove workloads. Resolve those
+finalizers through a reviewed migration before deleting the parent. Test removal
+on disposable resources first. See the upstream
+[ApplicationSet deletion semantics](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Application-Deletion/)
+and [controller policies](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Controlling-Resource-Modification/).
+
+The local Git publisher's parent Application has `prune: false` and no deletion
+finalizer. Git changes to retained children reconcile automatically; removing a
+child from the directory leaves that control resource present until an explicit
+retirement. Preserve or back up data, stop the owning reconciliation, then remove
+reviewed resources deliberately. `helm`/Kubernetes data-retention behavior belongs
+to each package. `ServerSideApply=true` controls field ownership, not backup or deletion.
 
 `bootstrap/argocd-project.yaml` replaces the permissive `AppProject` that Argo CD
 installs under the name `default`. A package sourced from an external Helm or

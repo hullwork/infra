@@ -15,8 +15,10 @@ The supported surface is application-neutral:
 ## Experimental local reference
 
 The Lima/kubeadm management bootstrap, local Git daemon, and finite local
-worker inventory are experimental development fixtures. They do not define the
-package API and are not promised as a production installer.
+worker inventory are experimental development fixtures with fixed addresses/ports.
+Mutation requires an explicit absolute `LIMA_HOME` so another inventory is never
+adopted implicitly. See [Local reference isolation](LOCAL_REFERENCE.md).
+These fixtures do not define the package API and are not promised as a production installer.
 
 ## Not a hosted service or security boundary
 

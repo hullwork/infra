@@ -33,13 +33,10 @@ application manifest, source checkout requirement, deployment callback, or
 product-specific shell branch. Applications publish immutable OCI, Helm, or Git
 artifacts and enter through external catalog data.
 
-> **Where this fits.** infra is one of several independently released repositories in this
-> platform. [`hullwork/platform-composition`](https://github.com/hullwork/platform-composition)
-> is the only place that describes all of them together: what each one is, where the
-> boundaries between them are, and how to install the set on an enterprise cluster. This
-> README does not repeat any of that - it is about infra alone. (Naming the other
-> repositories here would violate the neutrality this file just claimed;
-> `platform-composition` is data about them, which is exactly what this compiler consumes.)
+> **Use it independently.** You need this repository and your package records.
+> Follow [Use an existing Argo CD installation](docs/EXISTING_ARGOCD.md) to go
+> from rendered output to a watched Git directory. No companion repository or
+> Lima management cluster is required for that path.
 
 ## Quick start
 
@@ -151,30 +148,24 @@ See [Package authoring](docs/PACKAGE_AUTHORING.md) for the full record reference
 
 ## Defaults that fail closed
 
-Two settings decide whether a reconciliation can destroy data or pull from an
-unreviewed source. Both default to the safe answer and both are widened only by
-a reviewed Git change.
+Deletion has three separate controls. Changing one does not change the others:
 
-| Setting | Default | What widening it allows |
+| Profile setting | Default | Controls |
 | --- | --- | --- |
-| `ClusterProfile.spec.syncPolicy.prune` | `false` | Argo CD deletes every live object that leaves the stack |
-| `bootstrap/argocd-project.yaml` `sourceRepos` | in-cluster Git daemon only | the listed repository may be reconciled into the cluster |
+| `spec.syncPolicy.prune` | `false` | Removing workload resources during an Application sync |
+| `spec.applicationSetPolicy.applicationsSync` | `create-update` | Whether ApplicationSet may delete generated Applications |
+| `spec.applicationSetPolicy.preserveResourcesOnDeletion` | `true` | Retaining workload resources when generated Applications are deleted |
 
-`prune` is off because deletion is the one reconciliation outcome no rollback
-undoes: a removed `StatefulSet` takes its `PersistentVolumeClaim` with it. Every
-rendered application also carries `ServerSideApply=true`, which makes this
-sharper rather than softer — under server-side apply the fields Argo CD does not
-own are excluded from the diff, so drift stops being reported while pruning
-would keep deleting. `prune: false` is written into the rendered output
-explicitly, so the effective policy is readable in the diff instead of being
-inherited from an Argo CD default. Automated create and update, and self-heal,
-stay on; only deletion has to be a written decision:
+Argo CD must allow per-ApplicationSet policy overrides for `applicationsSync` to
+be honored. The local bootstrap enables that setting; an existing installation's
+operator must configure it. `preserveResourcesOnDeletion` protects resources
+separately. It does not prohibit a direct deletion by a cluster administrator.
+Existing Applications may retain deletion finalizers: inspect them before relying
+on new preservation defaults. See [Configuration ownership](docs/CONFIGURATION.md).
 
-```yaml
-spec:
-  syncPolicy:
-    prune: true
-```
+The renderer keeps `ServerSideApply=true` for field ownership. Server-side apply
+is not a deletion or backup policy. StatefulSet PVC retention depends on its
+retention policy; deleting a StatefulSet does not universally delete its PVCs.
 
 `bootstrap/argocd-project.yaml` replaces the fully permissive `AppProject` that
 Argo CD installs under the name `default`. It keeps that name on purpose,
@@ -199,10 +190,16 @@ The optional local bootstrap creates a Lima/kubeadm management cluster, an
 in-cluster Git daemon, and Argo CD. It installs no workload package.
 
 ```bash
+export LIMA_HOME="$PWD/.state/lima"
+mkdir -p "$LIMA_HOME"
 make preflight
 make bootstrap
 make bootstrap-workload
 ```
+
+Read [Local reference isolation](docs/LOCAL_REFERENCE.md) before using an existing
+Lima inventory. VM names, addresses and host ports remain a fixed experimental
+fixture; this is not a multi-installation or production cluster provisioner.
 
 `make bootstrap` and `make publish-rendered` refuse to run unless the tree is a
 clean checkout of `main` that exactly matches `origin/main`, or an unpacked
@@ -217,8 +214,11 @@ make publish-rendered RENDERED_NAME=demo \
   RENDERED_FILE=/tmp/infra-applications.yaml
 ```
 
-The publisher accepts only Argo `Application` or `ApplicationSet` resources and
-applies no workload directly. Production should use a protected external Git
+The publisher accepts only Argo `Application` or `ApplicationSet` resources.
+It registers one parent Application watching `rendered/<name>` on Git `main`;
+subsequent commits and reverts are reconciled from that directory. Root pruning
+is disabled, so retiring a child definition requires a separate reviewed removal.
+It applies no workload directly. Production should use a protected external Git
 provider or package registry. The unauthenticated `git://` daemon is not a
 production security boundary.
 
@@ -254,10 +254,10 @@ does not exist, and the suite stayed green until someone booted a VM by hand.
 `tests/test_nodepool.py` now pins the real upstream package repository URL in
 all three `lima/*.yaml` files and in the renderer that produces them.
 
-**Shell is thinly checked.** The repository has 13 shell files totalling about
-2,200 lines. `bash -n` covers 7 of them, roughly 880 lines. The largest file,
-`scripts/lib/kubeadm-bootstrap.sh` at about 890 lines, is not covered. There is
-no `shellcheck` in CI.
+**Shell verification has limits.** The unit suite checks shell syntax and lock
+cleanup, including macOS Bash 3.2, and exercises publication against a temporary
+Git remote with a simulated cluster. CI does not run ShellCheck. These checks
+do not establish VM or Argo CD runtime correctness.
 
 **`IntegrationPlugin` is a contract with no implementation.** The schema
 (`contracts/v1alpha1/integration-plugin.schema.json`) and a loader

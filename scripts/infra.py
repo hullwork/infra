@@ -522,16 +522,9 @@ def sync_policy(profile: dict[str, Any]) -> dict[str, Any]:
     }
     if configured.get("automated", True):
         policy["automated"] = {
-            # Deleting live objects is the one reconciliation outcome no
-            # rollback undoes, so it is opt-in.  ServerSideApply above makes it
-            # worse than it looks: fields Argo CD does not own are excluded from
-            # the diff, so drift stops being reported while pruning keeps
-            # deleting.  Automated create/update stays on by default; automated
-            # deletion has to be a written decision in the ClusterProfile.
+            # Pruning inside an Application is independent of ApplicationSet
+            # child deletion and resource finalizers.
             "prune": configured.get("prune", False),
-            # Self-heal only rewrites the objects the desired state declares; it
-            # never removes an object that has left the stack.  That is
-            # recoverable, so it stays on to keep reconciliation converging.
             "selfHeal": configured.get("selfHeal", True),
         }
     return policy
@@ -558,8 +551,16 @@ def render_application_sets(
             {
                 "apiVersion": "argoproj.io/v1alpha1",
                 "kind": "ApplicationSet",
-                "metadata": {"name": f"{stack_name}-{name}", "namespace": "argocd"},
+                "metadata": {"name": f"{stack_name}-{name}", "namespace": profile["spec"].get("argocdNamespace", "argocd")},
                 "spec": {
+                    "syncPolicy": {
+                        "applicationsSync": profile["spec"].get("applicationSetPolicy", {}).get(
+                            "applicationsSync", "create-update"
+                        ),
+                        "preserveResourcesOnDeletion": profile["spec"].get("applicationSetPolicy", {}).get(
+                            "preserveResourcesOnDeletion", True
+                        ),
+                    },
                     "generators": [{"list": {"elements": elements}}],
                     "template": {
                         "metadata": {
@@ -604,7 +605,7 @@ def render_applications(
                     "kind": "Application",
                     "metadata": {
                         "name": f"{cluster['name']}-{stack_name}-{name}",
-                        "namespace": "argocd",
+                        "namespace": profile["spec"].get("argocdNamespace", "argocd"),
                         "labels": {
                             "infra.convee.io/stack": stack_name,
                             "infra.convee.io/package": name,

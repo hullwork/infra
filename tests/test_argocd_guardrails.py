@@ -101,6 +101,53 @@ class SyncPolicyDefaultTests(unittest.TestCase):
         )
 
 
+class PortableProfileTests(unittest.TestCase):
+    def _inputs(self):
+        args = type("Args", (), {
+            "catalog": [ROOT / "catalog/packages"],
+            "stack": ROOT / "examples/stacks/demo.yaml",
+            "profile": ROOT / "examples/profiles/local.yaml",
+            "lock": ROOT / "versions.lock.yaml",
+        })()
+        return INFRA.load_and_validate(args)
+
+    def test_management_namespace_is_configurable_in_both_formats(self):
+        packages, stack, profile, lock = self._inputs()
+        profile["spec"]["argocdNamespace"] = "delivery-system"
+        INFRA.validate_profile(profile, Path("profile.yaml"))
+        for renderer in (INFRA.render_applications, INFRA.render_application_sets):
+            objects = renderer(packages, stack, profile, lock)
+            self.assertTrue(objects)
+            for obj in objects:
+                self.assertEqual("delivery-system", obj["metadata"]["namespace"])
+        profile["spec"]["argocdNamespace"] = "invalid/namespace"
+        with self.assertRaises(INFRA.ContractError):
+            INFRA.validate_profile(profile, Path("profile.yaml"))
+
+    def test_deletion_controls_are_independent_of_pruning(self):
+        packages, stack, profile, lock = self._inputs()
+        for prune in (False, True):
+            profile["spec"]["syncPolicy"]["prune"] = prune
+            obj = INFRA.render_application_sets(packages, stack, profile, lock)[0]
+            self.assertEqual({"applicationsSync": "create-update", "preserveResourcesOnDeletion": True},
+                             obj["spec"]["syncPolicy"])
+            self.assertEqual(prune, obj["spec"]["template"]["spec"]["syncPolicy"]["automated"]["prune"])
+        profile["spec"]["applicationSetPolicy"] = {
+            "applicationsSync": "sync", "preserveResourcesOnDeletion": False,
+        }
+        INFRA.validate_profile(profile, Path("profile.yaml"))
+        obj = INFRA.render_application_sets(packages, stack, profile, lock)[0]
+        self.assertEqual(profile["spec"]["applicationSetPolicy"], obj["spec"]["syncPolicy"])
+        profile["spec"]["applicationSetPolicy"]["applicationsSync"] = "unknown"
+        with self.assertRaises(INFRA.ContractError):
+            INFRA.validate_profile(profile, Path("profile.yaml"))
+
+    def test_local_controller_honors_per_set_policy(self):
+        bootstrap = (ROOT / "scripts/bootstrap.sh").read_text()
+        self.assertIn('"applicationsetcontroller.enable.policy.override":"true"', bootstrap)
+        self.assertIn("rollout restart deployment/argocd-applicationset-controller", bootstrap)
+
+
 class AppProjectGuardrailTests(unittest.TestCase):
     """The bootstrapped AppProject has to be narrower than Argo CD's built-in.
 

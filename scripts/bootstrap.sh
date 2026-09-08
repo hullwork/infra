@@ -8,6 +8,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=common.sh
 source "$script_dir/common.sh"
+kb_require_lima_home
 
 require_bins curl docker git kubectl limactl python3 shasum
 infra_require_clean_main_source "$infra_root"
@@ -52,6 +53,10 @@ kube_infra create namespace argocd --dry-run=client -o yaml |
   kube_infra apply -f -
 kube_infra -n argocd apply --server-side --force-conflicts -f "$argocd_manifest"
 kube_infra -n argocd apply -f "$infra_root/bootstrap/argocd-project.yaml"
+# Honor each compiled ApplicationSet's child-deletion policy.
+kube_infra -n argocd patch configmap argocd-cmd-params-cm --type merge \
+  -p '{"data":{"applicationsetcontroller.enable.policy.override":"true"}}'
+kube_infra -n argocd rollout restart deployment/argocd-applicationset-controller
 kube_infra -n argocd rollout status deployment/argocd-redis --timeout=240s
 kube_infra -n argocd rollout status deployment/argocd-repo-server --timeout=240s
 kube_infra -n argocd rollout status deployment/argocd-applicationset-controller --timeout=240s

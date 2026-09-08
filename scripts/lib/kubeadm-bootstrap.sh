@@ -138,11 +138,23 @@ kb_api_port() {
 #[critical] You cannot use grep -q: it will exit on hit and cause the upstream limactl to eat SIGPIPE(141).
 #Under set -o pipefail, "existence" is misjudged as "does not exist" (actual test preflight/destroy stable recovery
 #now). grep without -q will read all the input and then exit, which is semantically equivalent and has no race conditions.
+# The reference uses fixed VM names. Never implicitly adopt the user's global
+# Lima inventory; operators must select an isolated inventory or opt into an
+# existing one explicitly. This guard does not change that inventory.
+kb_require_lima_home() {
+  case "${LIMA_HOME:-}" in
+    /*) ;;
+    *) echo 'local reference requires an explicit absolute LIMA_HOME; see docs/LOCAL_REFERENCE.md' >&2; return 1 ;;
+  esac
+  export LIMA_HOME
+}
+
 kb_vm_exists() { limactl list -f '{{.Name}}' 2>/dev/null | grep -Fx "$1" >/dev/null; }
 
 kb_vm_state() { limactl list -f '{{.Name}} {{.Status}}' 2>/dev/null | awk -v v="$1" '$1 == v { print $2 }'; }
 
 kb_vm_up() {
+  kb_require_lima_home || return $?
   local vm="$1" yml="$kb_infra_root/lima/${1}.yaml"
   [[ -s "$yml" ]] || { echo "missing lima yaml: $yml" >&2; return 1; }
   if kb_vm_exists "$vm"; then
@@ -162,6 +174,7 @@ kb_vm_up() {
 
 #Save the disk during shutdown: VM and data are retained and can be pulled up as they are using kb_vm_up (the cluster will not be re-inited).
 kb_vm_down() {
+  kb_require_lima_home || return $?
   local vm="$1"
   if ! kb_vm_exists "$vm"; then
     echo "vm absent: $vm" >&2
@@ -176,6 +189,7 @@ kb_vm_down() {
 
 #Completely deleted (irreversible). Use this or kb_prune for e2e/cleanup scenarios, don't use kb_vm_down.
 kb_vm_delete() {
+  kb_require_lima_home || return $?
   local vm="$1"
   if ! kb_vm_exists "$vm"; then
     echo "vm absent: $vm" >&2
@@ -185,7 +199,7 @@ kb_vm_delete() {
 }
 
 #Lima 2.2.0 does not have `limactl exec`; `--` will then transparently transmit the entire string to the guest.
-kb_root() { local vm="$1"; shift; limactl shell "$vm" -- sudo "$@"; }
+kb_root() { kb_require_lima_home || return $?; local vm="$1"; shift; limactl shell "$vm" -- sudo "$@"; }
 
 # ---------------------------------------------------------------------------
 #Network (rule 0: `limactl network create` is not idempotent, check first and then build)
@@ -282,6 +296,7 @@ FLOOD
 }
 
 kb_ensure_network() {
+  kb_require_lima_home || return $?
   if limactl network ls 2>/dev/null | awk 'NR > 1 { print $1 }' | grep -Fxq kube; then
  # The network is already online: fill in the leases.json reserved section (to protect the next daemon restart/lazy startup).
     kb_ensure_dhcp_reservations
@@ -807,6 +822,7 @@ kb_ensure_storage_class() {
 # ---------------------------------------------------------------------------
 
 kb_ensure_cluster() {
+  kb_require_lima_home || return $?
   local cluster="$1"
   local show cp cp_ip kc api_port pod_cidr svc_cidr vm w join_cmd
   local -a join_args

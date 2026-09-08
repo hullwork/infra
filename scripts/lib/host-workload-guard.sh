@@ -138,7 +138,9 @@ infra_with_host_workload_lock() (
   set -e
   local label="${1:-unnamed workload}"
   shift
-  local lock_dir owner_file label_file owner_pid lock_owner salvage held
+  # EXIT runs after function locals unwind on Bash 3.2 error exits. Keep the
+  # cleanup paths in this function's isolated subshell, not in local scope.
+  local owner_pid lock_owner salvage held
   lock_dir="${INFRA_HOST_WORKLOAD_LOCK_DIR:-${TMPDIR:-/tmp}/infra-host-workload.lock}"
   owner_file="$lock_dir/pid"
   label_file="$lock_dir/label"
