@@ -5,6 +5,12 @@ All notable changes to Infra are documented in this file. Releases follow
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2026-09-09
+
+- Include the release build's exact resolved Python dependency inventory as an
+  attested asset and fail publication if the SBOM omits any dependency or version.
+  The earlier source-only SBOM did not resolve range-based requirements.
+
 ## [0.1.0-alpha.2] - 2026-09-08
 
 - Restore the remote annotated tag object after Actions checkout before release
@@ -98,7 +104,9 @@ All notable changes to Infra are documented in this file. Releases follow
 - Immutable OCI package and runtime-image release imports.
 - Standalone validation, rendering, and fresh-clone verification.
 
-[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0-alpha.2...HEAD
+[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0-alpha.3...HEAD
 [0.1.0-alpha.1]: https://github.com/hullwork/infra/releases/tag/v0.1.0-alpha.1
 
 [0.1.0-alpha.2]: https://github.com/hullwork/infra/releases/tag/v0.1.0-alpha.2
+
+[0.1.0-alpha.3]: https://github.com/hullwork/infra/releases/tag/v0.1.0-alpha.3

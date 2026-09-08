@@ -140,6 +140,11 @@ jobs:
           mkdir -p "${sbom_root}"
           tar -xzf "release/infra-core-${RELEASE_VERSION}.tar.gz" \
             -C "${sbom_root}" --strip-components=1
+          # Range-only requirements are not an installed dependency inventory.
+          # Record the tested build environment and include it in the SBOM scan.
+          python -m pip freeze --exclude pip --exclude setuptools --exclude wheel \
+            > release/requirements-resolved.txt
+          cp release/requirements-resolved.txt "${sbom_root}/requirements.txt"
 
       - name: Generate SPDX SBOM
         uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
@@ -151,12 +156,41 @@ jobs:
           upload-release-assets: false
           dependency-snapshot: false
 
+      - name: Verify SBOM dependency inventory
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python - <<'PYCODE'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          def normalize(name):
+              return re.sub(r"[-_.]+", "-", name).lower()
+
+          expected = {}
+          for line in Path("release/requirements-resolved.txt").read_text().splitlines():
+              name, version = line.split("==", 1)
+              expected[normalize(name)] = version
+          assert {"pyyaml", "jsonschema"} <= expected.keys(), expected
+          sbom = json.loads(Path(
+              "release/infra-" + os.environ["RELEASE_VERSION"] + ".spdx.json"
+          ).read_text())
+          actual = {normalize(p["name"]): p.get("versionInfo")
+                    for p in sbom.get("packages", [])}
+          missing = {name: version for name, version in expected.items()
+                     if actual.get(name) != version}
+          assert not missing, f"SBOM missing resolved dependencies: {missing}"
+          print(f"SBOM contains all {len(expected)} resolved Python dependencies")
+          PYCODE
+
       - name: Generate checksums
         shell: bash
         run: |
           set -euo pipefail
           cd release
-          sha256sum RELEASE-METADATA.json infra-*.tar.gz infra-*.spdx.json > SHA256SUMS
+          sha256sum RELEASE-METADATA.json requirements-resolved.txt infra-*.tar.gz infra-*.spdx.json > SHA256SUMS
 
       - name: Attest release assets
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
