@@ -119,7 +119,8 @@ for this example. A Git revert does not undo a data migration.
 4. On a disposable installation, commit a harmless supported chart value change,
    observe parent/child updates, then revert it and verify reconciliation again.
 5. Rehearse retirement separately: the parent's `prune: false` retains removed child
-   definitions. ApplicationSet `create-update` also retains removed generated
+   definitions and can leave the parent OutOfSync until explicit retirement.
+   ApplicationSet `create-update` also retains removed generated
    Applications when honored. Remove retained control resources only after reviewing
    their finalizers, workload retention and data backups.
 

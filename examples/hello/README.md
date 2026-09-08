@@ -89,6 +89,8 @@ curl --fail http://127.0.0.1:19898/api/info
 
 Expected: the page and JSON show `Hello from Infra`; the JSON reports version
 `6.15.0`. Argo CD should report the child as Synced and Healthy.
+Port-forwarding attaches to a Pod; rerun the port-forward command if a rollout
+replaces that Pod and closes the connection.
 
 ## Update, revert and retire
 
@@ -99,7 +101,9 @@ Expected: the page and JSON show `Hello from Infra`; the JSON reports version
 3. Revert the GitOps commit. After parent and child sync, verify `Hello from Infra`
    returns. This tests configuration rollback, not data recovery.
 4. In this disposable example, remove the child definition from Git. The parent
-   has pruning disabled, so the ApplicationSet and workload remain. Retire the
+   has pruning disabled, so the ApplicationSet and workload remain. The parent
+   can report OutOfSync with a resource requiring pruning; this is the expected
+   retained-resource state, not a failed rollback. Retire the
    retained ApplicationSet explicitly after checking child finalizers; the
    preservation policy should retain the workload even if its Application is
    garbage-collected. Verify the Deployment and Service still exist.
