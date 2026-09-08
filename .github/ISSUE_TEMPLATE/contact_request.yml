@@ -1,0 +1,19 @@
+name: Request a private contact channel
+description: Ask a maintainer how to contact them privately, without disclosing the report.
+title: "Request a private contact channel"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This request is public. Include no vulnerability details, incident details,
+        names, credentials or personal contact information. A maintainer will
+        arrange a confidential channel before requesting your report.
+        For vulnerabilities, prefer Security → Advisories → Report a vulnerability
+        when that private form is available.
+  - type: checkboxes
+    id: request
+    attributes:
+      label: Contact request
+      options:
+        - label: I would like a maintainer to arrange a private reporting channel.
+          required: true

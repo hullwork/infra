@@ -15,7 +15,10 @@ example, not a claim of image digest verification.
 - A GitOps repository readable by Argo CD, and permission to register a parent
   Application watching its rendered directory.
 
-The application itself creates only a Deployment and Service. Setting up Argo CD,
+Argo CD deploys only a Deployment and Service from this example. The upstream
+chart also renders Helm test Pods, which Argo CD ignores as unsupported
+[test hooks](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/#helm-hooks).
+Setting up Argo CD,
 the AppProject and namespace is an operator task. Application sync is manual by
 default. Never reuse a namespace already owned by another deployment.
 
@@ -26,6 +29,7 @@ From the repository root:
 ```bash
 mkdir -p .state/hello
 cp examples/hello/profile.yaml .state/hello/profile.yaml
+cp examples/hello/project.yaml .state/hello/project.yaml
 make validate CATALOG=examples/hello/catalog STACK=examples/hello/stack.yaml \
   PROFILE=.state/hello/profile.yaml LOCK=examples/hello/versions.lock.yaml
 scripts/infra-python.sh scripts/infra.py render \
@@ -39,9 +43,9 @@ Expected: validation succeeds and the output contains one ApplicationSet named
 `infra-hello`, and uses the commit in `versions.lock.yaml`.
 
 If Argo CD is in a custom namespace, change `spec.argocdNamespace` in the copied
-profile and `metadata.namespace` in a copy of `project.yaml`. For a different
+profile and `metadata.namespace` in `.state/hello/project.yaml`. For a different
 target cluster, also change the server in the profile and AppProject destination.
-Re-render after edits.
+Set `HELLO_WORKLOAD_CONTEXT` below to that cluster's context. Re-render after edits.
 
 ## Register with GitOps
 
@@ -50,8 +54,9 @@ operator create the namespace and apply the reviewed project:
 
 ```bash
 export HELLO_CONTEXT=REPLACE_ME
-kubectl --context "$HELLO_CONTEXT" create namespace infra-hello
-kubectl --context "$HELLO_CONTEXT" apply -f examples/hello/project.yaml
+export HELLO_WORKLOAD_CONTEXT="$HELLO_CONTEXT" # change for a separate workload cluster
+kubectl --context "$HELLO_WORKLOAD_CONTEXT" create namespace infra-hello
+kubectl --context "$HELLO_CONTEXT" apply -f .state/hello/project.yaml
 ```
 
 Follow [the existing-Argo-CD guide](../../docs/EXISTING_ARGOCD.md#connect-the-rendered-directory-to-git)
@@ -67,10 +72,9 @@ Application in Argo CD. The parent syncing does not automatically sync this chil
 
 ## Check the actual application
 
-With `HELLO_WORKLOAD_CONTEXT` set to the workload cluster context:
+Use the workload context set above:
 
 ```bash
-export HELLO_WORKLOAD_CONTEXT="$HELLO_CONTEXT"
 kubectl --context "$HELLO_WORKLOAD_CONTEXT" -n infra-hello \
   rollout status deployment/podinfo --timeout=180s
 kubectl --context "$HELLO_WORKLOAD_CONTEXT" -n infra-hello \
@@ -80,7 +84,7 @@ kubectl --context "$HELLO_WORKLOAD_CONTEXT" -n infra-hello \
 Open `http://127.0.0.1:19898` in a browser. In another terminal, request JSON:
 
 ```bash
-curl --fail -H 'Accept: application/json' http://127.0.0.1:19898/
+curl --fail http://127.0.0.1:19898/api/info
 ```
 
 Expected: the page and JSON show `Hello from Infra`; the JSON reports version

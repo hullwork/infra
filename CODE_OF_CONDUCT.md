@@ -59,10 +59,11 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported privately through the repository's GitHub maintainers. While the
-repository remains private, invited collaborators should use an existing private
-project channel to request the current enforcement contact. Do not disclose
-sensitive report details in a public issue.
+reported to the repository's maintainers through a confidential channel. If you
+do not already have one, use the repository's "Request a private contact channel"
+issue template. Submit only the request; include no incident details, names or
+personal information. A maintainer will arrange a private channel before asking
+for details. Do not disclose sensitive report details in a public issue.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
