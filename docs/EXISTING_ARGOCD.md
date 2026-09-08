@@ -4,11 +4,16 @@ Infra validates package records and writes Argo CD resources. It does not need a
 local management cluster, Lima, or a companion repository. This walkthrough uses
 a third-party chart and your existing Git/Argo CD infrastructure.
 
+For a first installation with no additional CRDs or cluster-wide workload
+resources, use [the podinfo walkthrough](../examples/hello/README.md). The
+cert-manager example below is intended for operators installing a platform add-on.
+
 ## Prerequisites
 
 - Python 3.10+ with `requirements-dev.txt` installed in a virtual environment.
 - An Argo CD installation with ApplicationSet support. OCI packages additionally
   require a version supporting OCI directory sources; this example uses Helm.
+  See the exact scope in [compatibility](COMPATIBILITY.md).
 - A target cluster already registered with Argo CD, and an operator-approved
   AppProject permitting the chart repository, destination and required resources.
 - A Git repository Argo CD can read; repository credentials stay in Argo CD.

@@ -1,0 +1,7 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: VersionLock
+spec:
+  packages:
+    podinfo:
+      # Upstream podinfo 6.15.0. Git pins chart content, not container image bytes.
+      revision: dd507173b7b75b2312a36cabe0de5f09c1ce69c8

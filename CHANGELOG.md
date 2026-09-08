@@ -5,6 +5,14 @@ All notable changes to Infra are documented in this file. Releases follow
 
 ## [Unreleased]
 
+## [0.1.0-alpha.1] - 2026-09-08
+
+- Prepare the first public Alpha candidate; the previously listed 0.1.0 was an
+  internal source milestone and was never published as a tag or GitHub Release.
+- Add a namespaced podinfo deployment walkthrough, compatibility boundaries and
+  release acceptance evidence. Test the minimum Python 3.10 in CI alongside 3.12.
+- Open the contribution workflow and document a reachable security-channel fallback.
+
 - Make the Argo CD control namespace configurable through ClusterProfile.
 - Separate Application pruning, ApplicationSet child deletion and resource retention;
   default to retaining workloads. Existing finalizers need migration review.
@@ -74,7 +82,7 @@ All notable changes to Infra are documented in this file. Releases follow
   exist on disk, which included that gitignored directory; it now derives them
   from git-tracked paths, since `git archive` can carry nothing else.
 
-## [0.1.0] - 2026-09-01
+## Internal milestone - 2026-09-01 (unreleased)
 
 ### Added
 
@@ -83,5 +91,5 @@ All notable changes to Infra are documented in this file. Releases follow
 - Immutable OCI package and runtime-image release imports.
 - Standalone validation, rendering, and fresh-clone verification.
 
-[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/hullwork/infra/releases/tag/v0.1.0
+[Unreleased]: https://github.com/hullwork/infra/compare/v0.1.0-alpha.1...HEAD
+[0.1.0-alpha.1]: https://github.com/hullwork/infra/releases/tag/v0.1.0-alpha.1

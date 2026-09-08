@@ -34,9 +34,10 @@ the latest commit on `main` and the latest tagged `v0.x` release.
 
 Do not report suspected vulnerabilities in a public issue, discussion, pull
 request, or chat room. Use this repository's private Security advisory
-workflow. If that facility is not available, contact a maintainer through an
-existing private channel and request a confidential reporting channel without
-including exploit details.
+workflow at <https://github.com/hullwork/infra/security/advisories/new>.
+If the private form is unavailable, open an issue titled "Request a private
+security reporting channel", with no vulnerability details. A maintainer will
+arrange a confidential channel before requesting any details.
 
 Include the affected revision, impact, reproduction conditions, exploit status,
 and a suggested mitigation. Maintainers will acknowledge reports on a

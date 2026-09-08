@@ -10,9 +10,9 @@ validation, immutable version locks, release metadata import, deterministic
 rendering, NodePool planning, and the generated Argo CD desired state.
 
 For usage questions and reproducible defects, use a GitHub issue after confirming
-that no existing issue covers the problem. The repository is currently private,
-so only invited collaborators can open issues. This restriction will be removed
-when the repository is made public.
+that no existing issue covers the problem. Use the repository's bug report or
+feature request template. See [compatibility](docs/COMPATIBILITY.md) and
+[release readiness](docs/RELEASE_READINESS.md) before assuming a path was tested.
 
 Include:
 

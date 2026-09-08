@@ -38,6 +38,24 @@ artifacts and enter through external catalog data.
 > from rendered output to a watched Git directory. No companion repository or
 > Lima management cluster is required for that path.
 
+Start with [a small working application](examples/hello/README.md) to deploy,
+change and revert a namespaced HTTP service. Check [compatibility](docs/COMPATIBILITY.md)
+and [release readiness](docs/RELEASE_READINESS.md) for the tested scope.
+
+## When to use Infra
+
+Use Infra when a platform team needs to compose independently owned package
+catalogs and reject invalid capability combinations or artifact references in CI
+before generating Argo CD configuration. Capability checks are static: they do
+not wait for services, verify live cluster features or order data migrations.
+
+If your only requirement is to map applications to clusters, start with native
+[ApplicationSet generators](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators/).
+If your workflow centers on Helm releases, compare [Helmfile](https://github.com/helmfile/helmfile),
+which already supplies environments, dependency ordering and chart lock files.
+Infra adds a separate package contract and per-cluster capability validation;
+it delegates rendering of package contents and continuous deployment to Argo CD.
+
 ## Quick start
 
 ```bash
@@ -56,7 +74,8 @@ Every target runs through `scripts/infra-python.sh`, which prefers
 `.venv/bin/python`, falls back to `uv run`, and finally to `python3`. Once the
 virtual environment exists, no `PYTHON=` export is needed.
 
-The default example is one demo OCI Helm package. Each input is a `make`
+The default example is one demo OCI Helm package with a placeholder digest; it
+tests rendering and cannot be installed. Each input is a `make`
 variable, so the same targets work on your own records:
 
 ```bash

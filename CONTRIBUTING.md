@@ -1,9 +1,7 @@
 # Contributing to infra
 
-Thank you for helping improve infra. The project is currently alpha and the
-repository is still in private pre-release. Contributions are therefore limited
-to invited collaborators until the repository is made public; the same workflow
-will apply to external contributors after publication.
+Thank you for helping improve infra. The project is alpha. Documentation fixes,
+reproducible bug reports and focused pull requests are welcome.
 
 By submitting a contribution, you agree that it may be distributed under the
 repository's MIT License. This project does not currently require a contributor
@@ -36,7 +34,8 @@ directly as pull requests.
 
 ## Development setup
 
-Use Python 3 and an isolated virtual environment:
+Use Python 3.10+ and an isolated virtual environment. See the
+[compatibility matrix](docs/COMPATIBILITY.md) for verified versions:
 
 ```bash
 python3 -m venv .venv
@@ -89,5 +88,5 @@ from one gate does not substitute for another.
 ## Review and conduct
 
 Maintainers may request changes for security, compatibility, portability, or
-scope. Approval and merge timing are not guaranteed while the project is in
-private alpha. All participation is governed by `CODE_OF_CONDUCT.md`.
+scope. Approval and merge timing are best effort during alpha. All participation
+is governed by `CODE_OF_CONDUCT.md`.

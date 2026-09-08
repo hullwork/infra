@@ -1,0 +1,20 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: ClusterProfile
+metadata:
+  name: hello
+spec:
+  project: infra-hello
+  argocdNamespace: argocd
+  clusters:
+    - name: local
+      server: https://kubernetes.default.svc
+      capabilities:
+        provides:
+          - kubernetes.api
+  applicationSetPolicy:
+    applicationsSync: create-update
+    preserveResourcesOnDeletion: true
+  syncPolicy:
+    automated: false
+    prune: false
+    selfHeal: false

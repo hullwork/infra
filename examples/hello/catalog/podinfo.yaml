@@ -1,0 +1,24 @@
+apiVersion: infra.convee.io/v1alpha1
+kind: Package
+metadata:
+  name: podinfo
+spec:
+  category: WorkloadPackage
+  namespace: infra-hello
+  source:
+    type: git
+    repoURL: https://github.com/stefanprodan/podinfo.git
+    path: charts/podinfo
+    renderer: helm
+  capabilities:
+    requires:
+      - kubernetes.api
+    provides:
+      - demo.http
+  values:
+    fullnameOverride: podinfo
+    replicaCount: 1
+    ui:
+      message: Hello from Infra
+    serviceAccount:
+      enabled: false

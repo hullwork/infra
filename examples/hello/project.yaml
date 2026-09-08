@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infra-hello
+  namespace: argocd
+spec:
+  sourceRepos:
+    - https://github.com/stefanprodan/podinfo.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: infra-hello
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: ""
+      kind: Service
